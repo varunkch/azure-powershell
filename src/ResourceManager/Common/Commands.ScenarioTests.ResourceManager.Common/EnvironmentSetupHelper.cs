@@ -151,6 +151,15 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
             }
         }
 
+        public string RMManagedServiceIdentityModule
+        {
+            get
+            {
+                return Path.Combine(this.PackageDirectory,
+                    @"ResourceManager\AzureResourceManager\AzureRM.ManagedServiceIdentity\AzureRM.ManagedServiceIdentity.psd1");
+            }
+        }
+
         public string GetRMModulePath(string psd1FileName)
         {
             string basename = Path.GetFileNameWithoutExtension(psd1FileName);

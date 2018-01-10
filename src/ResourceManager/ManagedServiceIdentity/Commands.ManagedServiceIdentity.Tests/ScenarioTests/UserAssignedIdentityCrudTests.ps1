@@ -4,91 +4,77 @@ Tests Managed Service Identity UserAssignedIdentities CRUD.
 #>
 function Test-CrudUserAssignedIdentity
 {
-    # Setup
-    $location = Get-ProviderLocation "Microsoft.ManagedServiceIdentity/service"
-    $resourceGroupName = Get-ResourceGroupName
-    $apiManagementName = Get-ApiManagementServiceName
-    $organization = "apimpowershellorg"
-    $adminEmail = "apim@powershell.org"
-    $secondApiManagementName = Get-ApiManagementServiceName
-    $secondOrganization = "second.apimpowershellorg"
-    $secondAdminEmail = "second.apim@powershell.org"
-    $secondSku = "Standard"
-    $secondSkuCapacity = 2
+    $rgName = "MSIPSTestRG";
+    $identityType = "Microsoft.ManagedIdentity/userAssignedIdentities"
+    $firstTagKey = "tag1";
+    $firstTagValue = "firstTag";
+    $secondTagKey = "tag2";
+    $secondTagValue = "secondTag";
 
     try
     {
-        # Create Resource Group
-        New-AzureRmResourceGroup -Name $resourceGroupName -Location $location
-        
-        # Create API Management service
-        $result = New-AzureRmApiManagement -ResourceGroupName $resourceGroupName -Location $location -Name $apiManagementName -Organization $organization -AdminEmail $adminEmail
+        $identityName = "MSIPSTestIdentity";
+        $loc = "westus";
+        $expectedIdentityID = "/subscriptions/fa5fc227-a624-475e-b696-cdd604c735bc/resourcegroups/"+$rgName+"/providers/Microsoft.ManagedIdentity/userAssignedIdentities/"+$identityName
+        #$expectedIdentityID | Out-File "C:\Users\vakuma\Desktop\resultID2.txt";
+        #Create new Resource Group
+        $rg = New-AzureRmResourceGroup -Name $rgName -Location $loc;
 
-        Assert-AreEqual $resourceGroupName $result.ResourceGroupName
-        Assert-AreEqual $apiManagementName $result.Name
-        Assert-AreEqual $location $result.Location
-        Assert-AreEqual "Developer" $result.Sku
-        Assert-AreEqual 1 $result.Capacity
-        Assert-AreEqual "None" $result.VpnType
+        #Create new Identity
+        $identity = New-AzureRmUserAssignedIdentity -ResourceGroupName $rgName -Name $identityName -Location $loc;
+        Assert-NotNull $identity;
+        Assert-AreEqual $identity.ID $expectedIdentityID;
+        Assert-AreEqual $identity.Name $identityName;
+        Assert-AreEqual $identity.Location $loc;
+        Assert-AreEqual $identity.Type $identityType;
+        #$identity | Out-File "C:\Users\vakuma\Desktop\resultID.txt";
 
-        # Get SSO token
-        $token = Get-AzureRmApiManagementSsoToken -ResourceGroupName $resourceGroupName -Name $apiManagementName
-        Assert-NotNull $token
+        #Update Identity
+        $identity = Set-AzureRmUserAssignedIdentity -ResourceGroupName $rgName -Name $identityName -Tag @{$firstTagKey=$firstTagValue; $secondTagKey=$secondTagValue};
+        $identity | Out-File "C:\Users\vakuma\Desktop\resultID.txt";
+        Assert-NotNull $identity;
+        Assert-AreEqual $identity.ID $expectedIdentityID;
+        Assert-AreEqual $identity.Name $identityName;
+        Assert-AreEqual $identity.Location $loc;
+        Assert-AreEqual $identity.Type $identityType;
+        Assert-AreEqual $identity.Tags.Count 2;
+        Assert-AreEqual $identity.Tags.ContainsKey($firstTagKey) True;
+        Assert-AreEqual $identity.Tags[$firstTagKey] $firstTagValue;
+        Assert-AreEqual $identity.Tags.ContainsKey($secondTagKey) True;
+        Assert-AreEqual $identity.Tags[$secondTagKey] $secondTagValue;
 
-        # List services within the resource group
-        $apimServicesInGroup = Get-AzureRmApiManagement -ResourceGroupName $resourceGroupName
-        Assert-True {$apimServicesInGroup.Count -ge 1}
-        
-        #Create Second Service
-        $secondResult = New-AzureRmApiManagement -ResourceGroupName $resourceGroupName -Location $location -Name $secondApiManagementName -Organization $secondOrganization -AdminEmail $secondAdminEmail -Sku $secondSku -Capacity $secondSkuCapacity
-        Assert-AreEqual $resourceGroupName $secondResult.ResourceGroupName
-        Assert-AreEqual $secondApiManagementName $secondResult.Name
-        Assert-AreEqual $location $secondResult.Location
-        Assert-AreEqual $secondSku $secondResult.Sku
-        Assert-AreEqual $secondSkuCapacity $secondResult.Capacity
+        #Get Identity
+        $identity = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName -Name $identityName
+        Assert-NotNull $identity;
+        Assert-AreEqual $identity.ID $expectedIdentityID;
+        Assert-AreEqual $identity.Name $identityName;
+        Assert-AreEqual $identity.Location $loc;
+        Assert-AreEqual $identity.Type $identityType;
+        Assert-AreEqual $identity.Tags.Count 2;
+        Assert-AreEqual $identity.Tags.ContainsKey($firstTagKey) True;
+        Assert-AreEqual $identity.Tags[$firstTagKey] $firstTagValue;
+        Assert-AreEqual $identity.Tags.ContainsKey($secondTagKey) True;
+        Assert-AreEqual $identity.Tags[$secondTagKey] $secondTagValue;
 
-        # Get SSO token
-        $secondToken = Get-AzureRmApiManagementSsoToken -ResourceGroupName $resourceGroupName -Name $secondApiManagementName
-        Assert-NotNull $secondToken
-
-        # List all services
-        $allServices = Get-AzureRmApiManagement
-        Assert-True {$allServices.Count -ge 2}
-        
-        $found = 0
-        for ($i = 0; $i -lt $allServices.Count; $i++)
-        {
-            if ($allServices[$i].Name -eq $apiManagementName)
-            {
-                $found = $found + 1
-                Assert-AreEqual $location $allServices[$i].Location
-                Assert-AreEqual $resourceGroupName $allServices[$i].ResourceGroupName
-        
-                Assert-AreEqual "Developer" $allServices[$i].Sku
-                Assert-AreEqual 1 $allServices[$i].Capacity
-            }
-
-            if ($allServices[$i].Name -eq $secondApiManagementName)
-            {
-                $found = $found + 1
-                Assert-AreEqual $location $allServices[$i].Location
-                Assert-AreEqual $resourceGroupName $allServices[$i].ResourceGroupName
-        
-                Assert-AreEqual $secondSku $allServices[$i].Sku
-                Assert-AreEqual $secondSkuCapacity $allServices[$i].Capacity
-            }
-        }
-        Assert-True {$found -eq 2} "Api Management services created earlier is not found."
-        
-         # Delete listed services in the ResourceGroup
-        Get-AzureRmApiManagement -ResourceGroupName $resourceGroupName | Remove-AzureRmApiManagement
-
-        $allServices = Get-AzureRmApiManagement -ResourceGroupName $resourceGroupName
-        Assert-AreEqual 0 $allServices.Count
+        #Delete Identity
+        Remove-AzureRmUserAssignedIdentity -ResourceGroupName $rgName -Name $identityName;
+        $resourceGroupIdentities = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName
+        Assert-Null $resourceGroupIdentities;
     }
     finally
     {
-        # Cleanup
-        Clean-ResourceGroup $resourceGroupName
+        Clean-ResourceGroup $rgname;
+    }
+}
+
+<#
+.SYNOPSIS
+Cleans the created resource groups
+#>
+function Clean-ResourceGroup($rgname)
+{
+    if ([Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback)
+    {
+        Remove-AzureRmResourceGroup -Name $rgname -Force
     }
 }
