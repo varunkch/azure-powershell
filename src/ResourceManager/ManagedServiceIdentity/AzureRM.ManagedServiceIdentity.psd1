@@ -72,8 +72,7 @@ NestedModules = @('.\Microsoft.Azure.Commands.ManagedServiceIdentity.dll')
 FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = 'New-AzureRmUserAssignedIdentity', 'Set-AzureRmUserAssignedIdentity',
-    'Get-AzureRmUserAssignedIdentity', 'Remove-AzureRmUserAssignedIdentity'
+CmdletsToExport = 'New-AzureRmUserAssignedIdentity', 'Get-AzureRmUserAssignedIdentity', 'Remove-AzureRmUserAssignedIdentity'
 
 
 # Variables to export from this module
