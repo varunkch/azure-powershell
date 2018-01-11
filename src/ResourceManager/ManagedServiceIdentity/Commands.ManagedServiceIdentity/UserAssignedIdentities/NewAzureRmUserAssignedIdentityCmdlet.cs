@@ -3,7 +3,9 @@ using System.Linq;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.ManagedServiceIdentity.Common;
 using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
-using Microsoft.Azure.Management.ManagedServiceIdentity.Models;
+using Microsoft.Azure.Management.Internal.Resources;
+using Microsoft.Azure.Management.Internal.Resources.Models;
+using Identity = Microsoft.Azure.Management.ManagedServiceIdentity.Models.Identity;
 
 namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 {
@@ -27,9 +29,10 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
         public string Name { get; set; }
 
         [Parameter(
-            Mandatory = true,
+            Mandatory = false,
             Position = 2,
             HelpMessage = "The Azure region name where the Identity should be created.")]
+        [LocationCompleter()]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -49,7 +52,8 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
                 {
                     var tagsDictionary = this.Tag?.Cast<DictionaryEntry>()
                         .ToDictionary(ht => (string) ht.Key, ht => (string) ht.Value);
-                    Identity identityProperties = new Identity(location: this.Location, tags: tagsDictionary);
+                    var location = GetLocation();
+                    Identity identityProperties = new Identity(location: location, tags: tagsDictionary);
                     var result =
                         this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities
                             .CreateOrUpdateWithHttpMessagesAsync(
@@ -60,6 +64,17 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
                     WriteObject(result.Body);
                 }
             });
+        }
+
+        private string GetLocation()
+        {
+            return this.Location ?? GetResourceGroupLocation(this.ResourceGroupName);
+        }
+
+        private string GetResourceGroupLocation(string resourceGroupName)
+        {
+            ResourceGroup rg = ArmClient.ResourceGroups.Get(resourceGroupName);
+            return rg.Location;
         }
     }
 }

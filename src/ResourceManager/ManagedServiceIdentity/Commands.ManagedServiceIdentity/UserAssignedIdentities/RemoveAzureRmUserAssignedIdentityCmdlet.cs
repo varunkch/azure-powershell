@@ -10,6 +10,7 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
         [Parameter(
             Mandatory = true,
             Position = 0,
+            ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
         [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
@@ -18,9 +19,15 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
         [Parameter(
             Mandatory = true,
             Position = 1,
+            ValueFromPipelineByPropertyName = true,
             HelpMessage = "The Identity name.")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "If specified will write true in case operation succeeds. This parameter is optional. Default value is false.")]
+        public SwitchParameter PassThru { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -33,6 +40,11 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
                     this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities.DeleteWithHttpMessagesAsync(
                         this.ResourceGroupName,
                         this.Name).GetAwaiter().GetResult();
+
+                    if (this.PassThru)
+                    {
+                        WriteObject(true);
+                    }
                 }
             });
         }
