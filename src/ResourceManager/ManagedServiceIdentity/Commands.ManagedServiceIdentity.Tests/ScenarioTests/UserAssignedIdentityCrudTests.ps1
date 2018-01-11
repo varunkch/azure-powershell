@@ -26,20 +26,18 @@ function Test-CrudUserAssignedIdentity
 
         #Create Identity1 under Resource Group 1
         $identity1 = New-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1 -Name $identityName1 -Location $loc;
-        $expectedIdentityId = Get-ExpectedIdentityId -subscription $subscriptionId -rg $rgName1 -identity $identityName1;
-        $expectedIdentityId | Out-File "C:\Users\vakuma\Desktop\resultID2.txt";
-        $identity1.ID | Out-File "C:\Users\vakuma\Desktop\resultID.txt";
+        $expectedIdentityId1 = Get-ExpectedIdentityId -subscription $subscriptionId -rg $rgName1 -identity $identityName1;
         Assert-NotNull $identity1;
-        Assert-AreEqual $identity1.ID $expectedIdentityId;
+        Assert-AreEqual $identity1.ID $expectedIdentityId1;
         Assert-AreEqual $identity1.Name $identityName1;
         Assert-AreEqual $identity1.Location $loc;
         Assert-AreEqual $identity1.Type $identityType;
 
         #Create Identity2 under Resource Group 2
         $identity2 = New-AzureRmUserAssignedIdentity -ResourceGroupName $rgName2 -Name $identityName2 -Location $loc;
-        $expectedIdentityId = Get-ExpectedIdentityId -subscription $subscriptionId -rg $rgName2 -identity $identityName2;
+        $expectedIdentityId2 = Get-ExpectedIdentityId -subscription $subscriptionId -rg $rgName2 -identity $identityName2;
         Assert-NotNull $identity2;
-        Assert-AreEqual $identity2.ID $expectedIdentityId;
+        Assert-AreEqual $identity2.ID $expectedIdentityId2;
         Assert-AreEqual $identity2.Name $identityName2;
         Assert-AreEqual $identity2.Location $loc;
         Assert-AreEqual $identity2.Type $identityType;
@@ -47,7 +45,7 @@ function Test-CrudUserAssignedIdentity
         #Update Identity 1
         $identity1 = Set-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1 -Name $identityName1 -Tag @{$firstTagKey=$firstTagValue; $secondTagKey=$secondTagValue};
         Assert-NotNull $identity1;
-        Assert-AreEqual $identity1.ID $expectedIdentityID1;
+        Assert-AreEqual $identity1.ID $expectedIdentityId1;
         Assert-AreEqual $identity1.Name $identityName1;
         Assert-AreEqual $identity1.Location $loc;
         Assert-AreEqual $identity1.Type $identityType;
@@ -60,7 +58,7 @@ function Test-CrudUserAssignedIdentity
         #Get Identity 1
         $identity1 = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1 -Name $identityName1
         Assert-NotNull $identity1;
-        Assert-AreEqual $identity1.ID $expectedIdentityID1;
+        Assert-AreEqual $identity1.ID $expectedIdentityId1;
         Assert-AreEqual $identity1.Name $identityName1;
         Assert-AreEqual $identity1.Location $loc;
         Assert-AreEqual $identity1.Type $identityType;
@@ -70,16 +68,33 @@ function Test-CrudUserAssignedIdentity
         Assert-AreEqual $identity1.Tags.ContainsKey($secondTagKey) True;
         Assert-AreEqual $identity1.Tags[$secondTagKey] $secondTagValue;
 
-        #Get identities under Subscription
-        $identities = Get-AzureRmUserAssignedIdentity
-        Assert-AreEqual $identities.Count 2
+        #Get identities under ResourceGroup 1
+        $identities = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1
+        Assert-AreEqual $identities.Count 1
+        Assert-NotNull $identities[0];
+        Assert-AreEqual $identities[0].ID $expectedIdentityId1;
+        Assert-AreEqual $identities[0].Name $identityName1;
+        Assert-AreEqual $identities[0].Location $loc;
+        Assert-AreEqual $identities[0].Type $identityType;
+        Assert-AreEqual $identities[0].Tags.Count 2;
+        Assert-AreEqual $identities[0].Tags.ContainsKey($firstTagKey) True;
+        Assert-AreEqual $identities[0].Tags[$firstTagKey] $firstTagValue;
+        Assert-AreEqual $identities[0].Tags.ContainsKey($secondTagKey) True;
+        Assert-AreEqual $identities[0].Tags[$secondTagKey] $secondTagValue;
+
+        #Get identities under ResourceGroup 2
+        $identities = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName2
+        Assert-AreEqual $identities.Count 1
+        Assert-NotNull $identities[0];
+        Assert-AreEqual $identities[0].ID $expectedIdentityId2;
+        Assert-AreEqual $identities[0].Name $identityName2;
+        Assert-AreEqual $identities[0].Location $loc;
+        Assert-AreEqual $identities[0].Type $identityType;
 
         #Delete Identity
         Remove-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1 -Name $identityName1;
         $resourceGroupIdentities = Get-AzureRmUserAssignedIdentity -ResourceGroupName $rgName1
         Assert-Null $resourceGroupIdentities;
-
-        
     }
     finally
     {

@@ -7,7 +7,7 @@ using Microsoft.Azure.Management.ManagedServiceIdentity.Models;
 
 namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmUserAssignedIdentity")]
+    [Cmdlet(VerbsCommon.New, "AzureRmUserAssignedIdentity", SupportsShouldProcess = true)]
     [OutputType(typeof(Identity))]
     public class NewAzureRmUserAssignedIdentityCmdlet : MsiBaseCmdlet
     {
@@ -45,14 +45,20 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 
             ExecuteClientAction(() =>
             {
-                var tagsDictionary = this.Tag?.Cast<DictionaryEntry>().ToDictionary(ht => (string)ht.Key, ht => (string)ht.Value);
-                Identity identityProperties = new Identity(location: this.Location, tags: tagsDictionary);
-                var result = this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities.CreateOrUpdateWithHttpMessagesAsync(
-                    this.ResourceGroupName,
-                    this.Name,
-                    identityProperties).GetAwaiter().GetResult();
-                
-                WriteObject(result.Body);
+                if (this.ShouldProcess(Name, VerbsCommon.New))
+                {
+                    var tagsDictionary = this.Tag?.Cast<DictionaryEntry>()
+                        .ToDictionary(ht => (string) ht.Key, ht => (string) ht.Value);
+                    Identity identityProperties = new Identity(location: this.Location, tags: tagsDictionary);
+                    var result =
+                        this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities
+                            .CreateOrUpdateWithHttpMessagesAsync(
+                                this.ResourceGroupName,
+                                this.Name,
+                                identityProperties).GetAwaiter().GetResult();
+
+                    WriteObject(result.Body);
+                }
             });
         }
     }

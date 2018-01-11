@@ -4,7 +4,7 @@ using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmUserAssignedIdentity")]
+    [Cmdlet(VerbsCommon.Remove, "AzureRmUserAssignedIdentity", SupportsShouldProcess = true)]
     public class RemoveAzureRmUserAssignedIdentityCmdlet : MsiBaseCmdlet
     {
         [Parameter(
@@ -28,9 +28,12 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 
             ExecuteClientAction(() =>
             {
-                this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities.DeleteWithHttpMessagesAsync(
-                    this.ResourceGroupName,
-                    this.Name).GetAwaiter().GetResult();
+                if (this.ShouldProcess(Name, VerbsCommon.Remove))
+                {
+                    this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities.DeleteWithHttpMessagesAsync(
+                        this.ResourceGroupName,
+                        this.Name).GetAwaiter().GetResult();
+                }
             });
         }
     }
