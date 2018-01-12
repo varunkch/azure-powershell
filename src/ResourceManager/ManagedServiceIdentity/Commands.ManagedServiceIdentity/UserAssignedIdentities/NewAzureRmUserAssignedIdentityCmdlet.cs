@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.ManagedServiceIdentity.Common;
+using Microsoft.Azure.Commands.ManagedServiceIdentity.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Internal.Resources;
 using Microsoft.Azure.Management.Internal.Resources.Models;
@@ -10,7 +11,7 @@ using Identity = Microsoft.Azure.Management.ManagedServiceIdentity.Models.Identi
 namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
 {
     [Cmdlet(VerbsCommon.New, "AzureRmUserAssignedIdentity", SupportsShouldProcess = true)]
-    [OutputType(typeof(Identity))]
+    [OutputType(typeof(PsUserAssignedIdentity))]
     public class NewAzureRmUserAssignedIdentityCmdlet : MsiBaseCmdlet
     {
         [Parameter(
@@ -55,13 +56,13 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
                     var location = GetLocation();
                     Identity identityProperties = new Identity(location: location, tags: tagsDictionary);
                     var result =
-                        this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities
+                        this.MsiClient.UserAssignedIdentities
                             .CreateOrUpdateWithHttpMessagesAsync(
                                 this.ResourceGroupName,
                                 this.Name,
                                 identityProperties).GetAwaiter().GetResult();
 
-                    WriteObject(result.Body);
+                    WriteIdentity(result.Body);
                 }
             });
         }

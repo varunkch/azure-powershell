@@ -37,7 +37,7 @@ namespace Microsoft.Azure.Commands.ManagedServiceIdentity.UserAssignedIdentities
             {
                 if (this.ShouldProcess(Name, VerbsCommon.Remove))
                 {
-                    this.MsiClient.ManagedServiceIdentityClient.UserAssignedIdentities.DeleteWithHttpMessagesAsync(
+                    this.MsiClient.UserAssignedIdentities.DeleteWithHttpMessagesAsync(
                         this.ResourceGroupName,
                         this.Name).GetAwaiter().GetResult();
 

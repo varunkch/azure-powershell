@@ -63,8 +63,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\ManagedServiceIdentityClient.cs" />
     <Compile Include="Common\MsiBaseCmdlet.cs" />
+    <Compile Include="Models\PSUserAssignedIdentity.cs" />
     <Compile Include="UserAssignedIdentities\GetAzureRmUserAssignedIdentityCmdlet.cs" />
     <Compile Include="UserAssignedIdentities\NewAzureRmUserAssignedIdentityCmdlet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
